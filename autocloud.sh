@@ -5,7 +5,7 @@
 # SCRIPT NAME: autocloud.sh                                       #
 #-----------------------------------------------------------------#
 # DESCRIPTION: This script makes it possible                      #
-# to run one or more commands                                     #
+# to run scripts in Shell Script and one or more commands         #
 # for multiple clouds at the same time. Just include in a file    #
 # of text the list of clouds, one below the other. Not            #
 # no need to include comma.                                       #
@@ -44,19 +44,19 @@ echo '                                                                          
 echo;
 echo;
 
-echo "Hi!";
+echo "Olá!";
 sleep 1;
 echo;
-echo "We will help you to run commands and scripts in batch clouds.";
+echo "Ajudaremos você a executar comandos e scripts em servidores em lote.";
 sleep 2;
 echo;
-echo "Just create a .txt file and add it to the same directory as the script.";
+echo "Basta criar um arquivo .txt e adicioná-lo ao mesmo diretório do script.";
 sleep 2;
 echo;
-echo "Then, change the value of the ARCHIVE variable to the name of your .txt file.";
+echo "Em seguida, altere o valor da variável ARCHIVE para o nome do seu arquivo .txt.";
 sleep 2;
 echo;
-echo "Let's start? =D" ;
+echo "Vamos começar? =D" ;
 
 
 sleep 2;
@@ -69,22 +69,63 @@ ARCHIVE=clouds.txt
 #Get the list of clouds from the clouds.txt file
 CLOUDLIST=$(cat "$ARCHIVE" | grep ^ip)
 
-# Request the command or script you want to run. (The script part I'm still testing.)
-read -p 'Digite os comandos separados por (;): ' COMANDO;
+begin () {
+    read -p 'É um comando ou script? [1]-Comando  [2]-Script:  ' CHOICE; 
+}
 
-#Loop to perform access with the echo that prints what is running.
-for CLOUDACCESS in $CLOUDLIST;
-do
+response () {
 
-    ssh root@"$CLOUDACCESS" "$COMANDO";
-    echo "$CLOUDACCESS" "$COMANDO";
+    if [ "$CHOICE" -eq 1 ]; then
 
-done
+        #Request the command you want to run.
+        read -p 'Digite os comandos separados por (;): ' COMANDO;
+
+        #Loop to perform access with the echo that prints what is running.
+        for CLOUDACCESS in $CLOUDLIST;
+        do
+
+            ssh root@"$CLOUDACCESS" "$COMANDO";
+            echo "$CLOUDACCESS" "$COMANDO";
+
+        done
+
+    elif [ "$CHOICE" -eq 2 ]; then
+
+        #Request the script you want to run.
+        read -p 'Digite o caminho absoluto do script: ' SCRIPT;
+
+        #Loop to perform access with the echo that prints what is running.
+        for CLOUDACCESS in $CLOUDLIST;
+        do
+
+            ssh root@"$CLOUDACCESS" rm -rf /autocloud/\*;
+            ssh root@"$CLOUDACCESS" mkdir -p /autocloud;
+            scp "$SCRIPT" root@"$CLOUDACCESS":/autocloud/;
+            ssh root@"$CLOUDACCESS" chmod +x /autocloud/\*.sh;
+            ssh root@"$CLOUDACCESS" /autocloud/./\*.sh;
+            ssh root@"$CLOUDACCESS" rm -rf /autocloud/\*;
+            echo; 
+            echo "$CLOUDACCESS" "$SCRIPT";
+            echo;
+            echo;
+        done
+
+    else
+        echo "Resposta inválida!";
+        echo;
+        echo;
+        begin;
+        response;
+    fi
+}
+
+begin;
+response;
 
 sleep 3;
 
-echo
-echo
+echo;
+echo;
 echo " ____   ___  ____  __  ____  ____                                    ";
 echo "/ ___) / __)(  _ \(  )(  _ \(_  _)                                   ";
 echo "\___ \( (__  )   / )(  ) __/  )(                                     ";
